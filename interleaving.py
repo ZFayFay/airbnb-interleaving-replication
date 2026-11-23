@@ -31,7 +31,7 @@ rows, cols = d.userId.map(uidx).values, d.movieId.map(tidx).values
 LIKED = csr_matrix(((d.rating >= 4).astype(float).values, (rows, cols)), shape=(len(uidx), N_ITEMS))
 
 def factors(M, k):
-    u_, s_, vt_ = svds(M, k=k)
+    u_, s_, vt_ = svds(M, k=k, random_state=0)
     U = u_ * np.sqrt(s_); V = vt_.T * np.sqrt(s_)
     U -= U.mean(0); V -= V.mean(0)
     return U / (np.linalg.norm(U, axis=1, keepdims=True) + 1e-9), V / (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
