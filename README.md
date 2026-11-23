@@ -18,6 +18,7 @@ Tastes are real (MovieLens, 2,000 most-rated movies). Searches and bookings are 
 
 Exploratory, added after the results above:
 - Comparing a model with a slightly better version of itself, the speedup tracks how much the two top-10 lists overlap: 15x at 80% overlap, 32x at 88%, 82x at 94%, 203x at 97%.
+- Under other booking models (1% or 10% booking rate, steeper attention), the median pre-registered speedup stays between 2.3x and 3.3x, and the 97%-overlap iteration between 113x and 217x.
 - When users judge the whole list (a list dominated by one genre makes them leave), the A/B test says the diverse ranker raises bookings by 7% to 35%, and interleaving says it loses, at every setting.
 
 ![Speedup vs overlap](figures/fig1_speedup_vs_overlap.png)

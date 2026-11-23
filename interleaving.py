@@ -290,6 +290,26 @@ D6 = pd.DataFrame(rows6); print(D6.round(5).to_string(index=False))
 RES["list_level"] = D6.to_dict(orient="records")
 
 # %% [markdown]
+# ## Sensitivity: does the conclusion depend on my booking model?
+# The booking rate (Assumption 4) and the attention curve (Assumption 3) are my choices, not Airbnb's. Rerun the pre-registered
+# pairs and two production-style iterations under other settings.
+
+# %%
+ATT0, C0 = ATT.copy(), C_OUT
+sens = []
+for label, target, att in [("3%, 1/log2(r+1) (main)", 0.03, ATT0), ("1% booking rate", 0.01, ATT0), ("10% booking rate", 0.10, ATT0),
+                           ("steeper attention 1/r", 0.03, 1 / np.arange(1, N_SHOW + 1))]:
+    ATT = att
+    C_OUT = brentq(lambda c: book_probs(shown_appeal(ORDER["noise1.5"]), c).sum(1).mean() - target, -10, 30)
+    sp = [sample_sizes(*pair_stats(a, b))["speedup"] for a, b in combinations(RANKERS, 2)]
+    it = {w: sample_sizes(*pair_stats("base", f"iter{w}"))["speedup"] for w in [0.1, 0.4]}
+    sens.append(dict(setting=label, median_speedup_all_pairs=float(np.median([x for x in sp if np.isfinite(x)])),
+                     speedup_iter_w0_1=float(it[0.1]), speedup_iter_w0_4=float(it[0.4])))
+ATT, C_OUT = ATT0, C0
+SENS = pd.DataFrame(sens); print(SENS.round(1).to_string(index=False))
+RES["sensitivity"] = SENS.to_dict(orient="records")
+
+# %% [markdown]
 # ## Figures
 
 # %%
@@ -330,3 +350,32 @@ def clean(o):
 RES["pairs"] = P.to_dict(orient="records")
 json.dump(clean(RES), open("figures/results.json", "w"), indent=1)
 print({k: RES[k]["pass_"] for k in ["H1", "H2", "H3", "H4", "H5"]})
+
+# %% [markdown]
+# ## Scorecard
+
+# %%
+
+def scorecard(rows, title, path):
+    """rows: (id, claim, test, result, verdict). Verdict colors: Pass green, Fail red, other amber."""
+    colors = {"Pass": "#2f855a", "Fail": "#c53030"}
+    fig, ax = plt.subplots(figsize=(10, 0.48 * len(rows) + 1.0)); ax.axis("off")
+    heads = ["", "Claim", "Pre-registered test", "Result", "Verdict"]
+    xs = [0.0, 0.05, 0.40, 0.70, 0.93]
+    y = 1.0; step = 1.0 / (len(rows) + 1.3)
+    for x, h in zip(xs, heads): ax.text(x, y, h, fontsize=9, fontweight="bold", va="top", transform=ax.transAxes)
+    for r in rows:
+        y -= step
+        ax.plot([0, 1], [y + step * 0.25] * 2, color="#e2e8f0", lw=0.8, transform=ax.transAxes)
+        for x, t in zip(xs[:4], r[:4]): ax.text(x, y, t, fontsize=8.5, va="top", transform=ax.transAxes, wrap=True)
+        ax.text(xs[4], y, r[4], fontsize=9, fontweight="bold", va="top", color=colors.get(r[4].split()[0], "#b7791f"), transform=ax.transAxes)
+    ax.set_title(title, fontsize=10, loc="left")
+    fig.tight_layout(); fig.savefig(path, dpi=200, bbox_inches="tight")
+
+scorecard([
+    ("H1", "Credit scheme is unbiased", "Position-only users: FPR 3.5% to 6.5%", f"{RES['H1']['fpr']*100:.1f}% over 2,000 tests", "Pass"),
+    ("H2", "Interleaving needs about 50x less traffic", "Median speedup at least 10x", f"{RES['H2']['median_speedup']:.1f}x across 66 ranker pairs", "Fail"),
+    ("H3", "Interleaving agrees with A/B in direction", "Same sign in 80%+ of pairs", f"{RES['H3']['sign_agreement']*100:.0f}%, correlation {RES['H3']['corr']:.2f}", "Pass"),
+    ("H4", "Speedup varies by pair", "Max / min above 5", f"{RES['H4']['min_speedup']:.1f}x to {RES['H4']['max_speedup']:.1f}x", "Pass"),
+    ("H5", "Set-level rankers fool interleaving", "Sign disagreement under hidden intent", "Agreed at every strength", "Fail"),
+], "Airbnb's interleaving claims: pre-registered tests and results", "figures/fig0_scorecard.png")

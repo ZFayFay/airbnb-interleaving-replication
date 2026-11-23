@@ -159,6 +159,32 @@
    "agree": false
   }
  ],
+ "sensitivity": [
+  {
+   "setting": "3%, 1/log2(r+1) (main)",
+   "median_speedup_all_pairs": 2.9769718873965596,
+   "speedup_iter_w0_1": 203.20592594208713,
+   "speedup_iter_w0_4": 32.303859264023906
+  },
+  {
+   "setting": "1% booking rate",
+   "median_speedup_all_pairs": 2.918378721974103,
+   "speedup_iter_w0_1": 199.21182118689123,
+   "speedup_iter_w0_4": 31.787223876721438
+  },
+  {
+   "setting": "10% booking rate",
+   "median_speedup_all_pairs": 3.2752215566351532,
+   "speedup_iter_w0_1": 217.2825148417871,
+   "speedup_iter_w0_4": 34.1191130384198
+  },
+  {
+   "setting": "steeper attention 1/r",
+   "median_speedup_all_pairs": 2.332307999817016,
+   "speedup_iter_w0_1": 113.28859962453205,
+   "speedup_iter_w0_4": 20.551877663830766
+  }
+ ],
  "pairs": [
   {
    "control": "oracle",
